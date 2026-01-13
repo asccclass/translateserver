@@ -2,12 +2,14 @@ package runner
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func RunWhisper(filename string) (string, error) {
@@ -15,6 +17,9 @@ func RunWhisper(filename string) (string, error) {
 	// Note: The user said "-v data:/app", implying a volume usage or local bind mount.
 	// If "data" is a local folder, it should be an absolute path.
 	// For simplicity, we get the absolute path of our local "data" directory.
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
 
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -25,20 +30,7 @@ func RunWhisper(filename string) (string, error) {
 	// The command the user gave:
 	// docker run -d --rm --gpus all --name whisper -v data:/app whisper-gx10 test.mp3 --model medium --language Chinese --output_dir /app
 
-	// We should probably NOT run with "-d" (detached) if we want to wait for it in this function easily,
-	// OR we run detached and then wait/poll.
-	// However, exec.Command waits by default if we don't put it in background.
-	// If we use -d, the command returns immediately with the container ID.
-	// Then we'd need to `docker wait <container_id>`.
-	// It's easier to remove "-d" and run synchronously for the worker.
-
-	// Also, ensure unique container name or let Docker assign one to avoid conflict if running multiple (though worker is serial?).
-	// We'll remove "--name whisper" or make it unique.
-
-	// Commands:
-	// "test.mp3" corresponds to 'filename' inside container (mapped to /app)
-
-	cmd := exec.Command("docker", "run", "--rm", "--gpus", "all",
+	cmd := exec.CommandContext(ctx, "docker", "run", "--rm", "--gpus", "all",
 		"-v", fmt.Sprintf("%s:/app", absDataPath),
 		"whisper-gx10",
 		filename,
@@ -47,11 +39,17 @@ func RunWhisper(filename string) (string, error) {
 		"--output_dir", "/app",
 	)
 
-	var stderr bytes.Buffer
+	// Capture both stdout and stderr for debugging
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	fmt.Printf("Executing Docker command: %s\n", cmd.String())
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("docker run failed: %v, stderr: %s", err, stderr.String())
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("docker run timed out after 10 minutes")
+		}
+		return "", fmt.Errorf("docker run failed: %v, stdout: %s, stderr: %s", err, stdout.String(), stderr.String())
 	}
 
 	// Read output file. Whisper normally produces .txt, .srt, .vtt.
@@ -68,7 +66,8 @@ func RunWhisper(filename string) (string, error) {
 	outputFile := filepath.Join(absDataPath, baseName+".txt")
 	content, err := ioutil.ReadFile(outputFile)
 	if err != nil {
-		// Try checking if it exists, maybe whisper naming convention is slightly different
+		// Log the stdout/stderr even if successful run but missing file, might help debug
+		fmt.Printf("Whisper finished but output file missing. Stdout: %s\nStderr: %s\n", stdout.String(), stderr.String())
 		return "Translation completed but output file not found or read error.", nil
 	}
 
