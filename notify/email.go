@@ -8,8 +8,8 @@ import (
 )
 
 func SendEmail(to, status, content string) {
-	if config.SmtpHost == "" {
-		log.Printf("Mock Email to %s: Job %s. Content length: %d", to, status, len(content))
+	if config.SmtpHost == "" || config.SmtpUser == "" || config.SmtpPass == "" {
+		log.Printf("Email skipped (credentials missing). Mock Email to %s: Job %s. Content length: %d", to, status, len(content))
 		return
 	}
 
