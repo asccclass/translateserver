@@ -18,7 +18,7 @@ func RunWhisper(filename string) (string, error) {
 	// If "data" is a local folder, it should be an absolute path.
 	// For simplicity, we get the absolute path of our local "data" directory.
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Minute)
 	defer cancel()
 
 	pwd, err := os.Getwd()
