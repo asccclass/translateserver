@@ -16,6 +16,14 @@ func Init() error {
 		return err
 	}
 
+	// Enable WAL mode and busy timeout
+	if _, err := DB.Exec("PRAGMA journal_mode=WAL;"); err != nil {
+		return err
+	}
+	if _, err := DB.Exec("PRAGMA busy_timeout=5000;"); err != nil {
+		return err
+	}
+
 	// Create table
 	query := `
 	CREATE TABLE IF NOT EXISTS jobs (
