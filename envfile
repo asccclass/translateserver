@@ -1,0 +1,10 @@
+SystemName=APIGateway
+PORT=8080
+
+CHECK_INTERVAL=30
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=5443
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+DocumentRoot=www/html
+TemplateRoot=www/template

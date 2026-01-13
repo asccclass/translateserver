@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whisper Translator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .container { background: #f4f4f4; padding: 2rem; border-radius: 8px; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input[type="text"], input[type="email"] { width: 100%; padding: 0.5rem; }
+        button { padding: 0.5rem 1rem; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #message { margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audio/Video Translation</h1>
+        <form hx-post="/upload" hx-encoding="multipart/form-data" hx-target="#message" hx-indicator="#indicator">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="your-email@example.com">
+            </div>
+            <div class="form-group">
+                <label for="file">Select File (mp3, wav, m4a, mp4, webm)</label>
+                <input type="file" id="file" name="file" accept=".mp3,.wav,.m4a,.mp4,.webm" required>
+            </div>
+            <button type="submit">Upload & Translate</button>
+        </form>
+        <div id="indicator" style="display:none;">Uploading...</div>
+        <div id="message"></div>
+    </div>
+</body>
+</html>

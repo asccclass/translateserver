@@ -1,0 +1,12 @@
+*.exe
+.envfile
+xx.txt
+*.old
+*.swp
+*.swp.bak
+*.bak
+*.bin
+*.log
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
